@@ -3,3 +3,13 @@
 GET {{LibraryManagement.Api_HostAddress}}/api/categories
 
 ###
+
+GET {{LibraryManagement.Api_HostAddress}}/api/categories/1
+
+###
+
+GET {{LibraryManagement.Api_HostAddress}}/api/categories/5
+
+###
+
+GET {{LibraryManagement.Api_HostAddress}}/api/categories/abc
