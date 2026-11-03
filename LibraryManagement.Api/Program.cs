@@ -2,6 +2,7 @@ using LibraryManagement.Api.DataAccess;
 using LibraryManagement.Api.Endpoints;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -19,6 +20,7 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
+    await DataSeeder.SeedAsync(app.Services);
 }
 
 app.UseHttpsRedirection();
