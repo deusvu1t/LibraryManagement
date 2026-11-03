@@ -1,25 +1,20 @@
+using LibraryManagement.Api.DataAccess;
 using LibraryManagement.Api.Entities;
-
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthorsController : ControllerBase
+public class AuthorsController(LibraryDbContext dbContext) : ControllerBase
 {
-    private static List<Author> _authors =
-    [
-        new Author { Id = 1, FirstName = "Alexandre", LastName = "Dumas", YearOfBirth = 1802 },
-        new Author { Id = 2, FirstName = "Agatha", LastName = "Christie", YearOfBirth = 1890 },
-        new Author { Id = 3, FirstName = "Fyodor", LastName = "Dostoevsky", YearOfBirth = 1821 }
-    ];
-
     [HttpGet]
     [ProducesResponseType(typeof(List<Author>), StatusCodes.Status200OK)]
     public async Task<ActionResult<List<Author>>> GetAll()
     {
-        return Ok(_authors);
+        var authors = await dbContext.Authors.ToListAsync();
+        return Ok(authors);
     }
 
     [HttpGet("{id:int}")]
@@ -27,8 +22,7 @@ public class AuthorsController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<Author>> GetById(int id)
     {
-        var author = _authors.FirstOrDefault(
-            author => author.Id == id);
+        var author = await dbContext.Authors.FindAsync(id);
 
         if (author is null)
         {
@@ -43,7 +37,6 @@ public class AuthorsController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(Author), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<Author>> Create(Author author)
     {
         if (string.IsNullOrWhiteSpace(author.FirstName) ||
@@ -54,14 +47,8 @@ public class AuthorsController : ControllerBase
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
-        if (_authors.Any(existingAuthor => existingAuthor.Id == author.Id))
-        {
-            return Problem(
-                detail: $"An author with Id {author.Id} already exists.",
-                statusCode: StatusCodes.Status409Conflict);
-        }
-
-        _authors.Add(author);
+        dbContext.Authors.Add(author);
+        await dbContext.SaveChangesAsync();
 
         return CreatedAtAction(
             nameof(GetById),
@@ -84,15 +71,7 @@ public class AuthorsController : ControllerBase
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
-        if (id != author.Id)
-        {
-            return Problem(
-                detail: "Author Id in the URL does not match the request body.",
-                statusCode: StatusCodes.Status400BadRequest);
-        }
-
-        var existingAuthor = _authors.FirstOrDefault(
-            existingAuthor => existingAuthor.Id == id);
+        var existingAuthor = await dbContext.Authors.FindAsync(id);
 
         if (existingAuthor is null)
         {
@@ -104,6 +83,7 @@ public class AuthorsController : ControllerBase
         existingAuthor.FirstName = author.FirstName;
         existingAuthor.LastName = author.LastName;
         existingAuthor.YearOfBirth = author.YearOfBirth;
+        await dbContext.SaveChangesAsync();
 
         return Ok(existingAuthor);
     }
@@ -113,8 +93,7 @@ public class AuthorsController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult> Delete(int id)
     {
-        var authorToBeDeleted = _authors.FirstOrDefault(
-            author => author.Id == id);
+        var authorToBeDeleted = await dbContext.Authors.FindAsync(id);
 
         if (authorToBeDeleted is null)
         {
@@ -123,7 +102,8 @@ public class AuthorsController : ControllerBase
                 statusCode: StatusCodes.Status404NotFound);
         }
 
-        _authors.Remove(authorToBeDeleted);
+        dbContext.Authors.Remove(authorToBeDeleted);
+        await dbContext.SaveChangesAsync();
 
         return NoContent();
     }
