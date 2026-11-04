@@ -47,14 +47,6 @@ public class AuthorsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ReadAuthorDto>> Create(CreateAuthorDto createDto)
     {
-        if (string.IsNullOrWhiteSpace(createDto.FirstName) ||
-            string.IsNullOrWhiteSpace(createDto.LastName))
-        {
-            return Problem(
-                detail: "Author's First name and last name cannot be empty.",
-                statusCode: StatusCodes.Status400BadRequest);
-        }
-
         var author = mapper.ToEntity(createDto);
 
         dbContext.Authors.Add(author);
@@ -73,14 +65,6 @@ public class AuthorsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ReadAuthorDto>> Update(int id, UpdateAuthorDto updateDto)
     {
-        if (string.IsNullOrWhiteSpace(updateDto.FirstName) ||
-            string.IsNullOrWhiteSpace(updateDto.LastName))
-        {
-            return Problem(
-                detail: "Author's first name and last name cannot be empty.",
-                statusCode: StatusCodes.Status400BadRequest);
-        }
-
         var existingAuthor = await dbContext.Authors.FindAsync(id);
 
         if (existingAuthor is null)
