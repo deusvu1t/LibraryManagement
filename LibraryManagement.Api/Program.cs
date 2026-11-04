@@ -13,6 +13,7 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddDbContext<LibraryDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("LibraryDb")));
+builder.Services.AddScoped<CategoryMapper>();
 builder.Services.AddScoped<AuthorMapper>();
 
 var app = builder.Build();
