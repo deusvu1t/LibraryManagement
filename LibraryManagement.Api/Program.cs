@@ -6,10 +6,10 @@ using LibraryManagement.Api.Mapping;
 using LibraryManagement.Api.Validators.Categories;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
@@ -24,7 +24,21 @@ builder.Services.AddScoped<IValidator<UpdateCategoryDto>, UpdateCategoryDtoValid
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+app.UseHttpsRedirection();
+
+app.Use(async (context, next) =>
+{
+    var stopwatch = Stopwatch.StartNew();
+    context.Response.OnStarting(() =>
+    {
+        stopwatch.Stop();
+        context.Response.Headers["X-Response-Time-Ms"] = stopwatch.ElapsedMilliseconds.ToString();
+        return Task.CompletedTask;
+    });
+
+    await next(context);
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -32,7 +46,7 @@ if (app.Environment.IsDevelopment())
     await DataSeeder.SeedAsync(app.Services);
 }
 
-app.UseHttpsRedirection();
+
 
 app.MapCategoryEndpoints();
 app.MapControllers();
