@@ -1,13 +1,15 @@
 using FluentValidation;
+
 using LibraryManagement.Api.DataAccess;
 using LibraryManagement.Api.DTOs.Categories;
 using LibraryManagement.Api.Endpoints;
 using LibraryManagement.Api.Mapping;
+using LibraryManagement.Api.Middleware;
 using LibraryManagement.Api.Validators.Categories;
-using Microsoft.EntityFrameworkCore;
-using Scalar.AspNetCore;
-using System.Diagnostics;
 
+using Microsoft.EntityFrameworkCore;
+
+using Scalar.AspNetCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
@@ -21,23 +23,15 @@ builder.Services.AddScoped<AuthorMapper>();
 ValidatorOptions.Global.LanguageManager.Enabled = false;
 builder.Services.AddScoped<IValidator<CreateCategoryDto>, CreateCategoryDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateCategoryDto>, UpdateCategoryDtoValidator>();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
 app.UseHttpsRedirection();
+app.UseMiddleware<RequestTimingMiddleware>();
 
-app.Use(async (context, next) =>
-{
-    var stopwatch = Stopwatch.StartNew();
-    context.Response.OnStarting(() =>
-    {
-        stopwatch.Stop();
-        context.Response.Headers["X-Response-Time-Ms"] = stopwatch.ElapsedMilliseconds.ToString();
-        return Task.CompletedTask;
-    });
-
-    await next(context);
-});
 
 if (app.Environment.IsDevelopment())
 {
