@@ -1,8 +1,10 @@
 ﻿using FluentValidation;
+
 using LibraryManagement.Api.DataAccess;
 using LibraryManagement.Api.DTOs.Categories;
-using LibraryManagement.Api.Extensions;
+using LibraryManagement.Api.Filters;
 using LibraryManagement.Api.Mapping;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,10 +26,12 @@ public static class CategoriesEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapPost("/", Create)
+            .AddEndpointFilter<ValidationFilter<CreateCategoryDto>>()
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
         group.MapPut("/{id:int}", Update)
+            .AddEndpointFilter<ValidationFilter<UpdateCategoryDto>>()
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
@@ -68,15 +72,8 @@ public static class CategoriesEndpoints
     private static async Task<Results<CreatedAtRoute<ReadCategoryDto>, ProblemHttpResult>> Create(
         CreateCategoryDto createDto,
         LibraryDbContext dbContext,
-        CategoryMapper mapper,
-        IValidator<CreateCategoryDto> validator)
+        CategoryMapper mapper)
     {
-        var validationResult = await validator.ValidateAsync(createDto);
-        if (validationResult.IsValid is false)
-        {
-            return validationResult.ToProblem();
-        }
-
         if (await dbContext.Categories.AnyAsync(
             existingCategory => existingCategory.Name == createDto.Name))
         {
@@ -100,15 +97,8 @@ public static class CategoriesEndpoints
         int id,
         UpdateCategoryDto updateDto,
         LibraryDbContext dbContext,
-        CategoryMapper mapper,
-        IValidator<UpdateCategoryDto> validator)
+        CategoryMapper mapper)
     {
-        var validationResult = await validator.ValidateAsync(updateDto);
-        if (validationResult.IsValid is false)
-        {
-            return validationResult.ToProblem();
-        }
-
         var existingCategory = await dbContext.Categories.FindAsync(id);
 
         if (existingCategory is null)
