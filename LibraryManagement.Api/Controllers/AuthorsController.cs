@@ -1,5 +1,6 @@
 using LibraryManagement.Api.DataAccess;
 using LibraryManagement.Api.DTOs.Authors;
+using LibraryManagement.Api.Filters;
 using LibraryManagement.Api.Mapping;
 
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace LibraryManagement.Api.Controllers;
 
 [ApiController]
+[ServiceFilter(typeof(LogActionFilter))]
 [Route("api/[controller]")]
 public class AuthorsController(
     LibraryDbContext dbContext,
