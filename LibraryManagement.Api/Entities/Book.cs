@@ -8,4 +8,5 @@ public class Book
     public required int TotalCopies { get; set; }
     public required int CategoryId { get; set; }
     public Category? Category { get; set; }
+    public ICollection<Author> Authors { get; set; } = [];
 }
