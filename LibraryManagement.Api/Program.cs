@@ -21,6 +21,7 @@ builder.Services.AddDbContext<LibraryDbContext>(options =>
         builder.Configuration.GetConnectionString("LibraryDb")));
 builder.Services.AddScoped<CategoryMapper>();
 builder.Services.AddScoped<AuthorMapper>();
+builder.Services.AddScoped<BookMapper>();
 ValidatorOptions.Global.LanguageManager.Enabled = false;
 builder.Services.AddScoped<IValidator<CreateCategoryDto>, CreateCategoryDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateCategoryDto>, UpdateCategoryDtoValidator>();

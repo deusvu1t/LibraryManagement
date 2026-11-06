@@ -2,13 +2,10 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace LibraryManagement.Api.Filters;
 
-public class LogActionFilter : IActionFilter
+public class LogActionFilter(ILogger<LogActionFilter> logger) : IActionFilter
 {
-    private readonly ILogger<LogActionFilter> _logger;
-    public LogActionFilter(ILogger<LogActionFilter> logger)
-    {
-        _logger = logger;
-    }
+    private readonly ILogger<LogActionFilter> _logger = logger;
+
     public void OnActionExecuting(ActionExecutingContext context)
     {
         var actionName = context.ActionDescriptor.DisplayName;

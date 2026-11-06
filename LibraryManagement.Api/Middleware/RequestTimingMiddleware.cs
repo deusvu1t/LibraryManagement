@@ -2,13 +2,9 @@ using System.Diagnostics;
 
 namespace LibraryManagement.Api.Middleware;
 
-public class RequestTimingMiddleware
+public class RequestTimingMiddleware(RequestDelegate next)
 {
-    private readonly RequestDelegate _next;
-    public RequestTimingMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
+    private readonly RequestDelegate _next = next;
 
     public async Task InvokeAsync(HttpContext context)
     {
