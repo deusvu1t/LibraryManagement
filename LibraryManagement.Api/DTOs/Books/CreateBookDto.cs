@@ -15,4 +15,7 @@ public class CreateBookDto
     [Required]
     [Range(1, int.MaxValue)]
     public required int CategoryId { get; init; }
+
+    [MinLength(1)]
+    public required ICollection<int> AuthorIds { get; init; }
 }

@@ -62,9 +62,21 @@ public class BooksController(
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
+        var authors = await dbContext.Authors
+            .Where(author => createDto.AuthorIds.Contains(author.Id))
+            .ToListAsync();
+
+        if (authors.Count != createDto.AuthorIds.Count)
+        {
+            return Problem(
+                detail: "One or more of the provided author ids is not valid.",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
         var book = mapper.ToEntity(createDto);
         book.AvailableCopies = book.TotalCopies;
         book.Category = category;
+        book.Authors = authors;
 
         dbContext.Books.Add(book);
         await dbContext.SaveChangesAsync();
