@@ -19,6 +19,7 @@ public class BooksController(
     {
         var books = await dbContext.Books
         .Include(book => book.Category)
+        .Include(book => book.Authors)
         .ToListAsync();
 
         var readDtos = books
@@ -35,6 +36,7 @@ public class BooksController(
     {
         var book = await dbContext.Books
             .Include(book => book.Category)
+            .Include(book => book.Authors)
             .FirstOrDefaultAsync(book => book.Id == id);
 
         if (book is null)

@@ -7,4 +7,5 @@ public class ReadBookDto
     public required int AvailableCopies { get; init; }
     public required int TotalCopies { get; init; }
     public string CategoryName { get; init; } = null!;
+    public ICollection<BookAuthorDto> Authors { get; init; } = [];
 }
