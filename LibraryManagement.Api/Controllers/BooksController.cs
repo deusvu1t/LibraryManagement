@@ -1,5 +1,6 @@
 using LibraryManagement.Api.DataAccess;
 using LibraryManagement.Api.DTOs.Books;
+using LibraryManagement.Api.Entities;
 using LibraryManagement.Api.Mapping;
 
 using Microsoft.AspNetCore.Mvc;
@@ -128,6 +129,8 @@ public class BooksController(
                 statusCode: StatusCodes.Status404NotFound);
         }
 
+        UpdateAvailableCopies(updateDto, existingBook);
+
         mapper.UpdateEntity(updateDto, existingBook);
         existingBook.Category = category;
         existingBook.Authors = authors;
@@ -135,6 +138,27 @@ public class BooksController(
         await dbContext.SaveChangesAsync();
 
         return Ok(mapper.ToReadDto(existingBook));
+    }
+
+    private static void UpdateAvailableCopies(
+        UpdateBookDto updateDto,
+        Book existingBook)
+    {
+        var oldTotalCopies = existingBook.TotalCopies;
+        var newTOtalCopies = updateDto.TotalCopies;
+        var totalCopiesDelta = newTOtalCopies - oldTotalCopies;
+
+        if (totalCopiesDelta > 0)
+        {
+            existingBook.AvailableCopies += totalCopiesDelta;
+        }
+        else if (totalCopiesDelta < 0)
+        {
+            // TODO: once Loans are implemented, add a check here to ensure
+            // that TotalCopies cannot be reduced below the number of active loans
+
+            existingBook.AvailableCopies += totalCopiesDelta;
+        }
     }
 
     [HttpDelete("{id:int}")]
