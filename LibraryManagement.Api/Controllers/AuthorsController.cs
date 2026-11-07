@@ -29,11 +29,13 @@ public class AuthorsController(
     }
 
     [HttpGet("{id:int}")]
-    [ProducesResponseType(typeof(ReadAuthorDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ReadAuthorDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ReadAuthorDto>> GetById(int id)
+    public async Task<ActionResult<ReadAuthorDetailDto>> GetById(int id)
     {
-        var author = await dbContext.Authors.FindAsync(id);
+        var author = await dbContext.Authors
+        .Include(author => author.Books)
+        .FirstOrDefaultAsync(author => author.Id == id);
 
         if (author is null)
         {
@@ -42,13 +44,13 @@ public class AuthorsController(
                 statusCode: StatusCodes.Status404NotFound);
         }
 
-        return Ok(mapper.ToReadDto(author));
+        return Ok(mapper.ToReadDetailDto(author));
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(ReadAuthorDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ReadAuthorDetailDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ReadAuthorDto>> Create(CreateAuthorDto createDto)
+    public async Task<ActionResult<ReadAuthorDetailDto>> Create(CreateAuthorDto createDto)
     {
         var author = mapper.ToEntity(createDto);
 
@@ -58,17 +60,19 @@ public class AuthorsController(
         return CreatedAtAction(
             nameof(GetById),
             new { id = author.Id },
-            mapper.ToReadDto(author));
+            mapper.ToReadDetailDto(author));
     }
 
 
     [HttpPut("{id:int}")]
-    [ProducesResponseType(typeof(ReadAuthorDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ReadAuthorDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ReadAuthorDto>> Update(int id, UpdateAuthorDto updateDto)
+    public async Task<ActionResult<ReadAuthorDetailDto>> Update(int id, UpdateAuthorDto updateDto)
     {
-        var existingAuthor = await dbContext.Authors.FindAsync(id);
+        var existingAuthor = await dbContext.Authors
+        .Include(author => author.Books)
+        .FirstOrDefaultAsync(author => author.Id == id);
 
         if (existingAuthor is null)
         {
@@ -80,7 +84,7 @@ public class AuthorsController(
         mapper.UpdateEntity(updateDto, existingAuthor);
         await dbContext.SaveChangesAsync();
 
-        return Ok(mapper.ToReadDto(existingAuthor));
+        return Ok(mapper.ToReadDetailDto(existingAuthor));
     }
 
     [HttpDelete("{id:int}")]

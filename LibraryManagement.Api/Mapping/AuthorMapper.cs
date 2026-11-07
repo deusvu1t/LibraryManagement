@@ -9,6 +9,7 @@ namespace LibraryManagement.Api.Mapping;
 public partial class AuthorMapper
 {
     public partial ReadAuthorDto ToReadDto(Author source);
+    public partial ReadAuthorDetailDto ToReadDetailDto(Author source);
 
     [MapperIgnoreTarget(nameof(Author.Id))]
     public partial Author ToEntity(CreateAuthorDto source);
