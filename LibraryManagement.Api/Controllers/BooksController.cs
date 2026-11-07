@@ -96,7 +96,30 @@ public class BooksController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ReadBookDto>> Update(int id, UpdateBookDto updateDto)
     {
-        var existingBook = await dbContext.Books.FindAsync(id);
+        var category = await dbContext.Categories.FirstOrDefaultAsync(
+            category => category.Id == updateDto.CategoryId);
+
+        if (category is null)
+        {
+            return Problem(
+                detail: $"Category with Id {updateDto.CategoryId} does not exist.",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        var authors = await dbContext.Authors
+            .Where(author => updateDto.AuthorIds.Contains(author.Id))
+            .ToListAsync();
+
+        if (authors.Count != updateDto.AuthorIds.Count)
+        {
+            return Problem(
+                detail: "One or more of the provided author ids is not valid.",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        var existingBook = await dbContext.Books
+            .Include(book => book.Authors)
+            .FirstOrDefaultAsync(book => book.Id == id);
 
         if (existingBook is null)
         {
@@ -106,6 +129,9 @@ public class BooksController(
         }
 
         mapper.UpdateEntity(updateDto, existingBook);
+        existingBook.Category = category;
+        existingBook.Authors = authors;
+
         await dbContext.SaveChangesAsync();
 
         return Ok(mapper.ToReadDto(existingBook));

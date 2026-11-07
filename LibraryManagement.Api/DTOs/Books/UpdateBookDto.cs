@@ -11,4 +11,11 @@ public class UpdateBookDto
     [Required]
     [Range(0, int.MaxValue)]
     public required int TotalCopies { get; init; }
+
+    [Required]
+    [Range(1, int.MaxValue)]
+    public required int CategoryId { get; init; }
+
+    [MinLength(1)]
+    public required ICollection<int> AuthorIds { get; init; }
 }
