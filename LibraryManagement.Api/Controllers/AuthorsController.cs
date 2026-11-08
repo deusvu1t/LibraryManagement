@@ -40,7 +40,7 @@ public class AuthorsController(
         if (author is null)
         {
             return Problem(
-                detail: $"An author with Id {id} has been not found.",
+                detail: $"An author with Id {id} has not been found.",
                 statusCode: StatusCodes.Status404NotFound);
         }
 
@@ -97,7 +97,7 @@ public class AuthorsController(
         if (authorToBeDeleted is null)
         {
             return Problem(
-                detail: $"An author with Id {id} has been not found.",
+                detail: $"An author with Id {id} has not been found.",
                 statusCode: StatusCodes.Status404NotFound);
         }
 

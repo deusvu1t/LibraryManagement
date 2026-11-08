@@ -43,7 +43,7 @@ public class BooksController(
         if (book is null)
         {
             return Problem(
-                detail: $"A book with Id {id} has been not found.",
+                detail: $"A book with Id {id} has not been found.",
                 statusCode: StatusCodes.Status404NotFound);
         }
 
@@ -171,7 +171,7 @@ public class BooksController(
         if (bookToBeDeleted is null)
         {
             return Problem(
-                detail: $"A book with Id {id} has been not found.",
+                detail: $"A book with Id {id} has not been found.",
                 statusCode: StatusCodes.Status404NotFound);
         }
 
