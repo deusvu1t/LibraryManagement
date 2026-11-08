@@ -90,15 +90,27 @@ public class AuthorsController(
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult> Delete(int id)
     {
-        var authorToBeDeleted = await dbContext.Authors.FindAsync(id);
+        var authorToBeDeleted = await dbContext.Authors
+            .Include(author => author.Books)
+            .FirstOrDefaultAsync(author => author.Id == id);
 
         if (authorToBeDeleted is null)
         {
             return Problem(
                 detail: $"An author with Id {id} has not been found.",
                 statusCode: StatusCodes.Status404NotFound);
+        }
+
+        if (authorToBeDeleted.Books.Count != 0)
+        {
+            return Problem(
+                detail: $"Cannot delete the author with Id {id}, " +
+                        $"because they have books assigned. " +
+                        $"Please remove or reassign the books first.",
+                statusCode: StatusCodes.Status409Conflict);
         }
 
         dbContext.Authors.Remove(authorToBeDeleted);
