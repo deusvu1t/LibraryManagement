@@ -5,15 +5,17 @@ using Riok.Mapperly.Abstractions;
 
 namespace LibraryManagement.Api.Mapping;
 
-[Mapper]
+[Mapper(RequiredMappingStrategy = RequiredMappingStrategy.Target)]
 public partial class AuthorMapper
 {
     public partial ReadAuthorDto ToReadDto(Author source);
     public partial ReadAuthorDetailDto ToReadDetailDto(Author source);
 
     [MapperIgnoreTarget(nameof(Author.Id))]
+    [MapperIgnoreTarget(nameof(Author.Books))]
     public partial Author ToEntity(CreateAuthorDto source);
 
     [MapperIgnoreTarget(nameof(Author.Id))]
+    [MapperIgnoreTarget(nameof(Author.Books))]
     public partial void UpdateEntity(UpdateAuthorDto source, Author target);
 }
