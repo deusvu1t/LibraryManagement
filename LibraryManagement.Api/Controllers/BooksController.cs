@@ -99,6 +99,17 @@ public class BooksController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ReadBookDto>> Update(int id, UpdateBookDto updateDto)
     {
+        var existingBook = await dbContext.Books
+            .Include(book => book.Authors)
+            .FirstOrDefaultAsync(book => book.Id == id);
+
+        if (existingBook is null)
+        {
+            return Problem(
+                detail: $"A book with Id {id} has not been found.",
+                statusCode: StatusCodes.Status404NotFound);
+        }
+
         var category = await dbContext.Categories.FirstOrDefaultAsync(
             category => category.Id == updateDto.CategoryId);
 
@@ -122,18 +133,11 @@ public class BooksController(
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
-        var existingBook = await dbContext.Books
-            .Include(book => book.Authors)
-            .FirstOrDefaultAsync(book => book.Id == id);
-
-        if (existingBook is null)
-        {
-            return Problem(
-                detail: $"A book with Id {id} has not been found.",
-                statusCode: StatusCodes.Status404NotFound);
-        }
-
-        UpdateAvailableCopies(updateDto, existingBook);
+        var totalCopiesBeforeEntityUpdate = existingBook.TotalCopies;
+        UpdateAvailableCopies(
+            totalCopiesBeforeEntityUpdate,
+            updateDto.TotalCopies,
+            existingBook);
 
         mapper.UpdateEntity(updateDto, existingBook);
         existingBook.Category = category;
@@ -145,11 +149,10 @@ public class BooksController(
     }
 
     private static void UpdateAvailableCopies(
-        UpdateBookDto updateDto,
+        int oldTotalCopies,
+        int newTOtalCopies,
         Book existingBook)
     {
-        var oldTotalCopies = existingBook.TotalCopies;
-        var newTOtalCopies = updateDto.TotalCopies;
         var totalCopiesDelta = newTOtalCopies - oldTotalCopies;
 
         if (totalCopiesDelta > 0)
