@@ -65,11 +65,13 @@ public class BooksController(
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
+        var uniqueAuthorIds = createDto.AuthorIds.Distinct().ToList();
+
         var authors = await dbContext.Authors
-            .Where(author => createDto.AuthorIds.Contains(author.Id))
+            .Where(author => uniqueAuthorIds.Contains(author.Id))
             .ToListAsync();
 
-        if (authors.Count != createDto.AuthorIds.Count)
+        if (authors.Count != uniqueAuthorIds.Count)
         {
             return Problem(
                 detail: "One or more of the provided author ids is not valid.",
@@ -107,11 +109,13 @@ public class BooksController(
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
+        var uniqueAuthorIds = updateDto.AuthorIds.Distinct().ToList();
+
         var authors = await dbContext.Authors
-            .Where(author => updateDto.AuthorIds.Contains(author.Id))
+            .Where(author => uniqueAuthorIds.Contains(author.Id))
             .ToListAsync();
 
-        if (authors.Count != updateDto.AuthorIds.Count)
+        if (authors.Count != uniqueAuthorIds.Count)
         {
             return Problem(
                 detail: "One or more of the provided author ids is not valid.",
