@@ -2,6 +2,7 @@ using LibraryManagement.Api.DataAccess;
 using LibraryManagement.Api.DTOs.Books;
 using LibraryManagement.Api.Entities;
 using LibraryManagement.Api.Mapping;
+using LibraryManagement.Api.RequestParameters;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,16 +17,26 @@ public class BooksController(
 {
     [HttpGet]
     [ProducesResponseType(typeof(List<ReadBookDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<List<ReadBookDto>>> GetAll()
+    public async Task<ActionResult<List<ReadBookDto>>> GetAll(
+        [FromQuery] PaginationParameters pagination)
     {
+        var totalCount = await dbContext.Books.CountAsync();
+        var totalPages = (int)Math.Ceiling((double)totalCount / pagination.PageSize);
+
         var books = await dbContext.Books
         .Include(book => book.Category)
         .Include(book => book.Authors)
+        .OrderBy(book => book.Id)
+        .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+        .Take(pagination.PageSize)
         .ToListAsync();
 
         var readDtos = books
             .Select(mapper.ToReadDto)
             .ToList();
+
+        Response.Headers.Append("X-Total-Count", totalCount.ToString());
+        Response.Headers.Append("X-Total-Pages", totalPages.ToString());
 
         return Ok(readDtos);
     }
