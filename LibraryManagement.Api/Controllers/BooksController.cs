@@ -21,12 +21,34 @@ public class BooksController(
         [FromQuery] PaginationParameters pagination,
         [FromQuery] BookFilteringParameters filteringParameters)
     {
-        var totalCount = await dbContext.Books.CountAsync();
+        var query = dbContext.Books
+            .Include(book => book.Category)
+            .Include(book => book.Authors)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filteringParameters.Title))
+        {
+            query = query.Where(
+                book => book.Title.Contains(filteringParameters.Title));
+        }
+
+        if (filteringParameters.CategoryId is not null)
+        {
+            query = query.Where(
+                book => book.CategoryId == filteringParameters.CategoryId);
+        }
+
+        if (filteringParameters.AuthorId is not null)
+        {
+            query = query.Where(
+                book => book.Authors.Any(
+                    author => author.Id == filteringParameters.AuthorId));
+        }
+
+        var totalCount = await query.CountAsync();
         var totalPages = (int)Math.Ceiling((double)totalCount / pagination.PageSize);
 
-        var books = await dbContext.Books
-        .Include(book => book.Category)
-        .Include(book => book.Authors)
+        var books = await query
         .OrderBy(book => book.Id)
         .Skip((pagination.PageNumber - 1) * pagination.PageSize)
         .Take(pagination.PageSize)
