@@ -19,9 +19,7 @@ public class BooksController(
     [ProducesResponseType(typeof(List<ReadBookDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<List<ReadBookDto>>> GetAll(
         [FromQuery] PaginationParameters pagination,
-        [FromQuery] string? title = null,
-        [FromQuery] int? categoryId = null,
-        [FromQuery] int? authorId = null)
+        [FromQuery] BookFilteringParameters filteringParameters)
     {
         var totalCount = await dbContext.Books.CountAsync();
         var totalPages = (int)Math.Ceiling((double)totalCount / pagination.PageSize);

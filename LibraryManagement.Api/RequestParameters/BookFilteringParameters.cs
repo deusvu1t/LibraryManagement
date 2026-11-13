@@ -1,5 +1,7 @@
 ﻿namespace LibraryManagement.Api.RequestParameters;
 
-public class BookFilteringParameters
-{
-}
+public record BookFilteringParameters(
+    string? Title,
+    int? CategoryId,
+    int? AuthorId
+);
