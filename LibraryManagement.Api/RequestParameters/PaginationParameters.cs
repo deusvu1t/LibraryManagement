@@ -5,10 +5,10 @@ namespace LibraryManagement.Api.RequestParameters;
 public class PaginationParameters
 {
     private const int MinimalPageNumber = 1;
-    private const int DefaultPageNumber = 1;
+    public const int DefaultPageNumber = 1;
     private const int MinimalPageSize = 1;
     private const int MaximalPageSize = 50;
-    private const int DefaultPageSize = 10;
+    public const int DefaultPageSize = 10;
 
     private int _pageNumber = DefaultPageNumber;
     [FromQuery(Name = "pageNumber")]
