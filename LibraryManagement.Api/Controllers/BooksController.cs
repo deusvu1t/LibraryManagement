@@ -3,6 +3,7 @@ using LibraryManagement.Api.DTOs.Books;
 using LibraryManagement.Api.Entities;
 using LibraryManagement.Api.Mapping;
 using LibraryManagement.Api.RequestParameters;
+using LibraryManagement.Api.RequestParameters.Enums;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +20,8 @@ public class BooksController(
     [ProducesResponseType(typeof(List<ReadBookDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<List<ReadBookDto>>> GetAll(
         [FromQuery] PaginationParameters pagination,
-        [FromQuery] BookFilteringParameters filteringParameters)
+        [FromQuery] BookFilteringParameters filteringParameters,
+        [FromQuery] SortingParameters<BookSortBy> sortingParameters)
     {
         var query = dbContext.Books
             .Include(book => book.Category)
@@ -45,11 +47,23 @@ public class BooksController(
                     author => author.Id == filteringParameters.AuthorId));
         }
 
+        query = sortingParameters.SortBy switch
+        {
+            BookSortBy.Title => sortingParameters.SortDirection == SortDirection.Acs ?
+                query.OrderBy(book => book.Title) :
+                query.OrderByDescending(book => book.Title),
+
+            BookSortBy.AvailableCopies => sortingParameters.SortDirection == SortDirection.Acs ?
+                query.OrderBy(book => book.AvailableCopies) :
+                query.OrderByDescending(book => book.AvailableCopies),
+
+            _ => query.OrderBy(book => book.Id)
+        };
+
         var totalCount = await query.CountAsync();
         var totalPages = (int)Math.Ceiling((double)totalCount / pagination.PageSize);
 
         var books = await query
-        .OrderBy(book => book.Id)
         .Skip((pagination.PageNumber - 1) * pagination.PageSize)
         .Take(pagination.PageSize)
         .ToListAsync();
