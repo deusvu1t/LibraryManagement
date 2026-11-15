@@ -6,6 +6,8 @@ using LibraryManagement.Api.Endpoints;
 using LibraryManagement.Api.Filters;
 using LibraryManagement.Api.Mapping;
 using LibraryManagement.Api.Middleware;
+using LibraryManagement.Api.Services;
+using LibraryManagement.Api.Services.Contracts;
 using LibraryManagement.Api.Validators.Categories;
 
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +30,7 @@ builder.Services.AddScoped<IValidator<UpdateCategoryDto>, UpdateCategoryDtoValid
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddScoped<LogActionFilter>();
+builder.Services.AddScoped<IBookService, BookService>();
 
 var app = builder.Build();
 
