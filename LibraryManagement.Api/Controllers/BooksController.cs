@@ -4,6 +4,7 @@ using LibraryManagement.Api.Entities;
 using LibraryManagement.Api.Mapping;
 using LibraryManagement.Api.RequestParameters;
 using LibraryManagement.Api.RequestParameters.Enums;
+using LibraryManagement.Api.Services.Contracts;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,8 @@ namespace LibraryManagement.Api.Controllers;
 [Route("api/[controller]")]
 public class BooksController(
     LibraryDbContext dbContext,
-    BookMapper mapper) : ControllerBase
+    BookMapper mapper,
+    IBookService bookService) : WebApiController
 {
     [HttpGet]
     [ProducesResponseType(typeof(List<ReadBookDto>), StatusCodes.Status200OK)]
@@ -103,41 +105,17 @@ public class BooksController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ReadBookDto>> Create(CreateBookDto createDto)
     {
-        var category = await dbContext.Categories.FirstOrDefaultAsync(
-            category => category.Id == createDto.CategoryId);
+        var result = await bookService.CreateAsync(createDto);
 
-        if (category is null)
+        if (result.IsError)
         {
-            return Problem(
-                detail: $"Category with Id {createDto.CategoryId} does not exist.",
-                statusCode: StatusCodes.Status400BadRequest);
+            return Problem(result.FirstError);
         }
-
-        var uniqueAuthorIds = createDto.AuthorIds.Distinct().ToList();
-
-        var authors = await dbContext.Authors
-            .Where(author => uniqueAuthorIds.Contains(author.Id))
-            .ToListAsync();
-
-        if (authors.Count != uniqueAuthorIds.Count)
-        {
-            return Problem(
-                detail: "One or more of the provided author ids is not valid.",
-                statusCode: StatusCodes.Status400BadRequest);
-        }
-
-        var book = mapper.ToEntity(createDto);
-        book.AvailableCopies = book.TotalCopies;
-        book.Category = category;
-        book.Authors = authors;
-
-        dbContext.Books.Add(book);
-        await dbContext.SaveChangesAsync();
 
         return CreatedAtAction(
             nameof(GetById),
-            new { id = book.Id },
-            mapper.ToReadDto(book));
+            new { id = result.Value.Id },
+            result.Value);
     }
 
 
