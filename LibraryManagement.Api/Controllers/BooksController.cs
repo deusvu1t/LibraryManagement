@@ -25,59 +25,20 @@ public class BooksController(
         [FromQuery] BookFilteringParameters filteringParameters,
         [FromQuery] SortingParameters<BookSortBy> sortingParameters)
     {
-        var query = dbContext.Books
-            .Include(book => book.Category)
-            .Include(book => book.Authors)
-            .AsQueryable();
+        var result = await bookService.GetAllAsync(
+            pagination,
+            filteringParameters,
+            sortingParameters);
 
-        if (!string.IsNullOrWhiteSpace(filteringParameters.Title))
+        if (result.IsError)
         {
-            query = query.Where(
-                book => book.Title.Contains(filteringParameters.Title));
+            return Problem(result.FirstError);
         }
 
-        if (filteringParameters.CategoryId is not null)
-        {
-            query = query.Where(
-                book => book.CategoryId == filteringParameters.CategoryId);
-        }
+        Response.Headers.Append("X-Total-Count", result.Value.TotalCount.ToString());
+        Response.Headers.Append("X-Total-Pages", result.Value.TotalPages.ToString());
 
-        if (filteringParameters.AuthorId is not null)
-        {
-            query = query.Where(
-                book => book.Authors.Any(
-                    author => author.Id == filteringParameters.AuthorId));
-        }
-
-        query = sortingParameters.SortBy switch
-        {
-            BookSortBy.Title => sortingParameters.SortDirection == SortDirection.Acs ?
-                query.OrderBy(book => book.Title) :
-                query.OrderByDescending(book => book.Title),
-
-            BookSortBy.AvailableCopies => sortingParameters.SortDirection == SortDirection.Acs ?
-                query.OrderBy(book => book.AvailableCopies) :
-                query.OrderByDescending(book => book.AvailableCopies),
-
-            _ => query.OrderBy(book => book.Id)
-        };
-
-        var totalCount = await query.CountAsync();
-        var totalPages = (int)Math.Ceiling((double)totalCount / pagination.PageSize);
-
-        var books = await query
-        .Skip((pagination.PageNumber - 1) * pagination.PageSize)
-        .Take(pagination.PageSize)
-        .ToListAsync();
-
-        var readDtos = books
-            .Select(mapper.ToReadDto)
-            .ToList();
-
-        Response.Headers.Append("X-Total-Count", totalCount.ToString());
-        Response.Headers.Append("X-Total-Pages", totalPages.ToString());
-
-        return Ok(readDtos);
+        return Ok(result.Value.Items);
     }
 
     [HttpGet("{id:int}")]
