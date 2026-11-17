@@ -3,6 +3,7 @@
 using LibraryManagement.Api.CustomResults;
 using LibraryManagement.Api.DataAccess;
 using LibraryManagement.Api.DTOs.Books;
+using LibraryManagement.Api.Entities;
 using LibraryManagement.Api.Errors;
 using LibraryManagement.Api.Mapping;
 using LibraryManagement.Api.RequestParameters;
@@ -76,6 +77,21 @@ public class BookService(
             pagination);
     }
 
+    public async Task<ErrorOr<ReadBookDto>> GetByIdAsync(int id)
+    {
+        var book = await dbContext.Books
+            .Include(book => book.Category)
+            .Include(book => book.Authors)
+            .FirstOrDefaultAsync(book => book.Id == id);
+
+        if (book is null)
+        {
+            return BookErrors.BookNotFound(id);
+        }
+
+        return mapper.ToReadDto(book);
+    }
+
     public async Task<ErrorOr<ReadBookDto>> CreateAsync(CreateBookDto createDto)
     {
         var category = await dbContext.Categories.FirstOrDefaultAsync(
@@ -106,5 +122,85 @@ public class BookService(
         await dbContext.SaveChangesAsync();
 
         return mapper.ToReadDto(book);
+    }
+
+    public async Task<ErrorOr<ReadBookDto>> UpdateAsync(int id, UpdateBookDto updateDto)
+    {
+        var existingBook = await dbContext.Books
+            .Include(book => book.Authors)
+            .FirstOrDefaultAsync(book => book.Id == id);
+
+        if (existingBook is null)
+        {
+            return BookErrors.BookNotFound(id);
+        }
+
+        var category = await dbContext.Categories.FirstOrDefaultAsync(
+            category => category.Id == updateDto.CategoryId);
+
+        if (category is null)
+        {
+            return BookErrors.CategoryDoesNotExist(updateDto.CategoryId);
+        }
+
+        var uniqueAuthorIds = updateDto.AuthorIds.Distinct().ToList();
+
+        var authors = await dbContext.Authors
+            .Where(author => uniqueAuthorIds.Contains(author.Id))
+            .ToListAsync();
+
+        if (authors.Count != uniqueAuthorIds.Count)
+        {
+            return BookErrors.AuthorsNotFound();
+        }
+
+        var totalCopiesBeforeEntityUpdate = existingBook.TotalCopies;
+        UpdateAvailableCopies(
+            totalCopiesBeforeEntityUpdate,
+            updateDto.TotalCopies,
+            existingBook);
+
+        mapper.UpdateEntity(updateDto, existingBook);
+        existingBook.Category = category;
+        existingBook.Authors = authors;
+
+        await dbContext.SaveChangesAsync();
+
+        return mapper.ToReadDto(existingBook);
+    }
+
+    private static void UpdateAvailableCopies(
+    int oldTotalCopies,
+    int newTotalCopies,
+    Book existingBook)
+    {
+        var totalCopiesDelta = newTotalCopies - oldTotalCopies;
+
+        if (totalCopiesDelta > 0)
+        {
+            existingBook.AvailableCopies += totalCopiesDelta;
+        }
+        else if (totalCopiesDelta < 0)
+        {
+            // TODO: once Loans are implemented, add a check here to ensure
+            // that TotalCopies cannot be reduced below the number of active loans
+
+            existingBook.AvailableCopies += totalCopiesDelta;
+        }
+    }
+
+    public async Task<ErrorOr<Success>> DeleteAsync(int id)
+    {
+        var book = await dbContext.Books.FindAsync(id);
+
+        if (book is null)
+        {
+            return BookErrors.BookNotFound(id);
+        }
+
+        dbContext.Books.Remove(book);
+        await dbContext.SaveChangesAsync();
+
+        return Result.Success;
     }
 }

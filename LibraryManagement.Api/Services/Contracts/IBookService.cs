@@ -13,5 +13,11 @@ public interface IBookService
         BookFilteringParameters filteringParameters,
         SortingParameters<BookSortBy> sortingParameters);
 
+    Task<ErrorOr<ReadBookDto>> GetByIdAsync(int id);
+
     Task<ErrorOr<ReadBookDto>> CreateAsync(CreateBookDto createDto);
+
+    Task<ErrorOr<ReadBookDto>> UpdateAsync(int id, UpdateBookDto updateDto);
+
+    Task<ErrorOr<Success>> DeleteAsync(int id);
 }
