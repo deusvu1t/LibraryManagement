@@ -1,4 +1,4 @@
-﻿using ErrorOr;
+using ErrorOr;
 
 using LibraryManagement.Api.CustomResults;
 using LibraryManagement.Api.DataAccess;
@@ -189,7 +189,7 @@ public class BookService(
         }
     }
 
-    public async Task<ErrorOr<Success>> DeleteAsync(int id)
+    public async Task<ErrorOr<Deleted>> DeleteAsync(int id)
     {
         var book = await dbContext.Books.FindAsync(id);
 
@@ -201,6 +201,6 @@ public class BookService(
         dbContext.Books.Remove(book);
         await dbContext.SaveChangesAsync();
 
-        return Result.Success;
+        return Result.Deleted;
     }
 }

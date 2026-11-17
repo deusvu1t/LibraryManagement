@@ -19,5 +19,5 @@ public interface IBookService
 
     Task<ErrorOr<ReadBookDto>> UpdateAsync(int id, UpdateBookDto updateDto);
 
-    Task<ErrorOr<Success>> DeleteAsync(int id);
+    Task<ErrorOr<Deleted>> DeleteAsync(int id);
 }
