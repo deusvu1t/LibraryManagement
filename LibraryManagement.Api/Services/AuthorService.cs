@@ -8,6 +8,7 @@ using LibraryManagement.Api.Mapping;
 using LibraryManagement.Api.RequestParameters;
 using LibraryManagement.Api.Services.Contracts;
 
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.Api.Services;
@@ -74,6 +75,29 @@ public class AuthorService(
 
         return mapper.ToReadDetailDto(existingAuthor);
     }
+
+    public async Task<ErrorOr<ReadAuthorDetailDto>> PatchAsync(
+        int id,
+        JsonPatchDocument<PatchAuthorDto> patchDocument)
+    {
+        var existingAuthor = await dbContext.Authors
+            .Include(author => author.Books)
+            .FirstOrDefaultAsync(author => author.Id == id);
+
+        if (existingAuthor is null)
+        {
+            return AuthorErrors.AuthorNotFound(id);
+        }
+
+        var pathDto = mapper.ToPatchDto(existingAuthor);
+        patchDocument.ApplyTo(pathDto);
+        mapper.UpdateEntity(pathDto, existingAuthor);
+
+        await dbContext.SaveChangesAsync();
+
+        return mapper.ToReadDetailDto(existingAuthor);
+    }
+
     public async Task<ErrorOr<Deleted>> DeleteAsync(int id)
     {
         var authorToBeDeleted = await dbContext.Authors

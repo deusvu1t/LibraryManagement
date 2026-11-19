@@ -1,4 +1,4 @@
-﻿using LibraryManagement.Api.DTOs.Authors;
+using LibraryManagement.Api.DTOs.Authors;
 using LibraryManagement.Api.Entities;
 
 using Riok.Mapperly.Abstractions;
@@ -18,4 +18,10 @@ public partial class AuthorMapper
     [MapperIgnoreTarget(nameof(Author.Id))]
     [MapperIgnoreTarget(nameof(Author.Books))]
     public partial void UpdateEntity(UpdateAuthorDto source, Author target);
+
+    public partial PatchAuthorDto ToPatchDto(Author source);
+
+    [MapperIgnoreTarget(nameof(Author.Id))]
+    [MapperIgnoreTarget(nameof(Author.Books))]
+    public partial void UpdateEntity(PatchAuthorDto source, Author target);
 }
