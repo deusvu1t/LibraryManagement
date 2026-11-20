@@ -91,6 +91,14 @@ public class AuthorsController(
         int id,
         JsonPatchDocument<PatchAuthorDto> patchDocument)
     {
+        var patchDto = new PatchAuthorDto();
+        patchDocument.ApplyTo(patchDto);
+
+        if (!TryValidateModel(patchDto))
+        {
+            return ValidationProblem(ModelState);
+        }
+
         var result = await authorService.PatchAsync(id, patchDocument);
 
         if (result.IsError)
