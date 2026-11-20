@@ -92,7 +92,11 @@ public class AuthorsController(
         JsonPatchDocument<PatchAuthorDto> patchDocument)
     {
         var patchDto = new PatchAuthorDto();
-        patchDocument.ApplyTo(patchDto);
+        patchDocument.ApplyTo(
+            patchDto,
+            jsonPatchError => ModelState.AddModelError(
+                jsonPatchError.AffectedObject.GetType().Name,
+                jsonPatchError.ErrorMessage));
 
         if (!TryValidateModel(patchDto))
         {
