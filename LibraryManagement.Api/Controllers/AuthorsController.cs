@@ -3,6 +3,7 @@ using LibraryManagement.Api.Filters;
 using LibraryManagement.Api.RequestParameters;
 using LibraryManagement.Api.Services.Contracts;
 
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryManagement.Api.Controllers;
@@ -72,6 +73,25 @@ public class AuthorsController(
     public async Task<ActionResult<ReadAuthorDetailDto>> Update(int id, UpdateAuthorDto updateDto)
     {
         var result = await authorService.UpdateAsync(id, updateDto);
+
+        if (result.IsError)
+        {
+            return Problem(result.FirstError);
+        }
+
+        return Ok(result.Value);
+    }
+
+    [HttpPatch("{id:int}")]
+    [Consumes("application/json-patch+json")]
+    [ProducesResponseType(typeof(ReadAuthorDetailDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ReadAuthorDetailDto>> Patch(
+        int id,
+        JsonPatchDocument<PatchAuthorDto> patchDocument)
+    {
+        var result = await authorService.PatchAsync(id, patchDocument);
 
         if (result.IsError)
         {
