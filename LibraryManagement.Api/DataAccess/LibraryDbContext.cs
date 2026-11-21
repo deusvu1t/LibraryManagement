@@ -9,4 +9,5 @@ public class LibraryDbContext(DbContextOptions<LibraryDbContext> options) : DbCo
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Author> Authors => Set<Author>();
     public DbSet<Book> Books => Set<Book>();
+    public DbSet<Member> Members => Set<Member>();
 }
