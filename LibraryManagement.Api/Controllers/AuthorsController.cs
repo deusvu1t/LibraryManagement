@@ -1,6 +1,7 @@
 using LibraryManagement.Api.DTOs.Authors;
 using LibraryManagement.Api.Filters;
 using LibraryManagement.Api.RequestParameters;
+using LibraryManagement.Api.Common;
 using LibraryManagement.Api.Services.Contracts;
 
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
@@ -26,8 +27,8 @@ public class AuthorsController(
             return Problem(result.FirstError);
         }
 
-        Response.Headers.Append("X-Total-Count", result.Value.TotalCount.ToString());
-        Response.Headers.Append("X-Total-Pages", result.Value.TotalPages.ToString());
+        Response.Headers.Append(ResponseHeaders.TotalCount, result.Value.TotalCount.ToString());
+        Response.Headers.Append(ResponseHeaders.TotalPages, result.Value.TotalPages.ToString());
 
         return Ok(result.Value.Items);
     }

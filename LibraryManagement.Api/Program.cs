@@ -55,6 +55,7 @@ if (app.Environment.IsDevelopment())
 
 
 app.MapCategoryEndpoints();
+app.MapMembersEndpoints();
 app.MapControllers();
 
 app.Run();
