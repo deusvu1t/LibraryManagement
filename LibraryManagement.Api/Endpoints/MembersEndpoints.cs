@@ -38,6 +38,9 @@ public static class MembersEndpoints
 
         group.MapDelete("/{id:int}", Delete)
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapPatch("/{id:int}/restore", Restore)
+            .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
     private static async Task<Results<Ok<List<ReadMemberDto>>, ProblemHttpResult>> GetAll(
@@ -153,6 +156,21 @@ public static class MembersEndpoints
         int id,
         LibraryDbContext dbContext)
     {
+        return await SetMemberActiveStatus(id, false, dbContext);
+    }
+
+    private static async Task<Results<NoContent, ProblemHttpResult>> Restore(
+        int id,
+        LibraryDbContext dbContext)
+    {
+        return await SetMemberActiveStatus(id, true, dbContext);
+    }
+
+    private static async Task<Results<NoContent, ProblemHttpResult>> SetMemberActiveStatus(
+    int id,
+    bool isActive,
+    LibraryDbContext dbContext)
+    {
         var member = await dbContext.Members.FindAsync(id);
 
         if (member is null)
@@ -162,7 +180,7 @@ public static class MembersEndpoints
                 statusCode: StatusCodes.Status404NotFound);
         }
 
-        member.IsActive = false;
+        member.IsActive = isActive;
         await dbContext.SaveChangesAsync();
 
         return TypedResults.NoContent();
