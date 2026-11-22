@@ -34,6 +34,9 @@ public static class MembersEndpoints
             .AddEndpointFilter<ValidationFilter<UpdateMemberDto>>()
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapDelete("/{id:int}", Delete)
+            .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
     private static async Task<Ok<List<ReadMemberDto>>> GetAll(
@@ -123,5 +126,24 @@ public static class MembersEndpoints
         await dbContext.SaveChangesAsync();
 
         return TypedResults.Ok(mapper.ToReadDto(existingMember));
+    }
+
+    private static async Task<Results<NoContent, ProblemHttpResult>> Delete(
+        int id,
+        LibraryDbContext dbContext)
+    {
+        var member = await dbContext.Members.FindAsync(id);
+
+        if (member is null)
+        {
+            return TypedResults.Problem(
+                detail: $"A member with Id {id} has not been found.",
+                statusCode: StatusCodes.Status404NotFound);
+        }
+
+        member.IsActive = false;
+        await dbContext.SaveChangesAsync();
+
+        return TypedResults.NoContent();
     }
 }
