@@ -19,7 +19,8 @@ public static class MembersEndpoints
             .MapGroup("/api/members")
             .WithTags("Members");
 
-        group.MapGet("/", GetAll);
+        group.MapGet("/", GetAll)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
 
         group.MapGet("/{id:int}", GetById)
             .WithName("GetMemberById")
@@ -39,12 +40,13 @@ public static class MembersEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
-    private static async Task<Ok<List<ReadMemberDto>>> GetAll(
+    private static async Task<Results<Ok<List<ReadMemberDto>>, ProblemHttpResult>> GetAll(
         LibraryDbContext dbContext,
         HttpContext httpContext,
         MemberMapper mapper,
         int pageNumber = PaginationParameters.DefaultPageNumber,
-        int pageSize = PaginationParameters.DefaultPageSize)
+        int pageSize = PaginationParameters.DefaultPageSize,
+        string status = "active")
     {
         var pagination = new PaginationParameters
         {
@@ -53,6 +55,25 @@ public static class MembersEndpoints
         };
 
         var query = dbContext.Members.AsQueryable();
+
+        switch (status.ToLowerInvariant())
+        {
+            case "active":
+                query = query.Where(member => member.IsActive);
+                break;
+
+            case "inactive":
+                query = query.Where(member => !member.IsActive);
+                break;
+
+            case "all":
+                break;
+
+            default:
+                return TypedResults.Problem(
+                    detail: "Status must be active, inactive, or all.",
+                    statusCode: StatusCodes.Status400BadRequest);
+        }
 
         var totalCount = await query.CountAsync();
         var totalPages = (int)Math.Ceiling((double)totalCount / pagination.PageSize);
