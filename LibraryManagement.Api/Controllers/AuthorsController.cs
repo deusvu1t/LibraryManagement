@@ -1,8 +1,8 @@
+using LibraryManagement.Api.Common;
 using LibraryManagement.Api.DTOs.Authors;
 using LibraryManagement.Api.Filters;
 using LibraryManagement.Api.RequestParameters;
-using LibraryManagement.Api.Common;
-using LibraryManagement.Api.Services.Contracts;
+using LibraryManagement.Api.Services;
 
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +13,7 @@ namespace LibraryManagement.Api.Controllers;
 [ServiceFilter(typeof(LogActionFilter))]
 [Route("api/[controller]")]
 public class AuthorsController(
-    IAuthorService authorService) : WebApiController
+    AuthorsService authorService) : WebApiController
 {
     [HttpGet]
     [ProducesResponseType(typeof(List<ReadAuthorDto>), StatusCodes.Status200OK)]

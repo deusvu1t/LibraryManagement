@@ -7,7 +7,7 @@ using LibraryManagement.Api.RequestParameters.Enums;
 
 namespace LibraryManagement.Api.Services.Contracts;
 
-public interface IBookService
+public interface IBooksService
 {
     Task<ErrorOr<PagedResult<ReadBookDto>>> GetAllAsync(
         PaginationParameters pagination,

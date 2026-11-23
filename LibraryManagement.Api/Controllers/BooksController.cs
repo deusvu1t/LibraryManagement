@@ -1,8 +1,8 @@
+using LibraryManagement.Api.Common;
 using LibraryManagement.Api.DTOs.Books;
 using LibraryManagement.Api.RequestParameters;
 using LibraryManagement.Api.RequestParameters.Enums;
-using LibraryManagement.Api.Common;
-using LibraryManagement.Api.Services.Contracts;
+using LibraryManagement.Api.Services;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,7 +11,7 @@ namespace LibraryManagement.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class BooksController(
-    IBookService bookService) : WebApiController
+    BooksService bookService) : WebApiController
 {
     [HttpGet]
     [ProducesResponseType(typeof(List<ReadBookDto>), StatusCodes.Status200OK)]

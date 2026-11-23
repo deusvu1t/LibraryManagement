@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 
 namespace LibraryManagement.Api.Services.Contracts;
 
-public interface IAuthorService
+public interface IAuthorsService
 {
     Task<ErrorOr<PagedResult<ReadAuthorDto>>> GetAllAsync(
         PaginationParameters pagination);

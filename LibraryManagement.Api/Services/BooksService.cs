@@ -14,9 +14,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.Api.Services;
 
-public class BookService(
+public class BooksService(
     LibraryDbContext dbContext,
-    BookMapper mapper) : IBookService
+    BookMapper mapper) : IBooksService
 {
     public async Task<ErrorOr<PagedResult<ReadBookDto>>> GetAllAsync(
         PaginationParameters pagination,
