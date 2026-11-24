@@ -155,10 +155,15 @@ public class BooksService(
         }
 
         var totalCopiesBeforeEntityUpdate = existingBook.TotalCopies;
-        UpdateAvailableCopies(
+        var updateCopiesResult = await UpdateAvailableCopies(
             totalCopiesBeforeEntityUpdate,
             updateDto.TotalCopies,
             existingBook);
+
+        if (updateCopiesResult.IsError)
+        {
+            return updateCopiesResult.FirstError;
+        }
 
         mapper.UpdateEntity(updateDto, existingBook);
         existingBook.Category = category;
@@ -169,12 +174,13 @@ public class BooksService(
         return mapper.ToReadDto(existingBook);
     }
 
-    private static void UpdateAvailableCopies(
+    private async Task<ErrorOr<Success>> UpdateAvailableCopies(
     int oldTotalCopies,
     int newTotalCopies,
     Book existingBook)
     {
         var totalCopiesDelta = newTotalCopies - oldTotalCopies;
+
 
         if (totalCopiesDelta > 0)
         {
@@ -182,11 +188,18 @@ public class BooksService(
         }
         else if (totalCopiesDelta < 0)
         {
-            // TODO: once Loans are implemented, add a check here to ensure
-            // that TotalCopies cannot be reduced below the number of active loans
+            var activeLoansCount = await dbContext.Loans
+                .CountAsync(loan => loan.BookId == existingBook.Id &&
+                                    loan.ReturnDate == null);
 
+            if (newTotalCopies < activeLoansCount)
+            {
+                return BookErrors.NotEnoughAvailableCopies(existingBook.Id);
+            }
             existingBook.AvailableCopies += totalCopiesDelta;
         }
+
+        return Result.Success;
     }
 
     public async Task<ErrorOr<Deleted>> DeleteAsync(int id)
@@ -196,6 +209,14 @@ public class BooksService(
         if (book is null)
         {
             return BookErrors.BookNotFound(id);
+        }
+
+        var hasLoans = await dbContext.Loans.AnyAsync(
+            loan => loan.BookId == id);
+
+        if (hasLoans)
+        {
+            return BookErrors.HasLoans(id);
         }
 
         dbContext.Books.Remove(book);

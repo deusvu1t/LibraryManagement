@@ -115,7 +115,7 @@ public class LoansService(
             return LoanErrors.BookNotFound(createDto.BookId);
         }
 
-        if (book.AvailableCopies == 1)
+        if (book.AvailableCopies == 0)
         {
             return LoanErrors.NoAvailableCopies(createDto.BookId);
         }

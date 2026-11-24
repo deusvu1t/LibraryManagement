@@ -2,8 +2,7 @@ using LibraryManagement.Api.Common;
 using LibraryManagement.Api.DTOs.Books;
 using LibraryManagement.Api.RequestParameters;
 using LibraryManagement.Api.RequestParameters.Enums;
-using LibraryManagement.Api.Services;
-
+using LibraryManagement.Api.Services.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryManagement.Api.Controllers;
@@ -11,7 +10,7 @@ namespace LibraryManagement.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class BooksController(
-    BooksService bookService) : WebApiController
+    IBooksService booksService) : WebApiController
 {
     [HttpGet]
     [ProducesResponseType(typeof(List<ReadBookDto>), StatusCodes.Status200OK)]
@@ -20,7 +19,7 @@ public class BooksController(
         [FromQuery] BookFilteringParameters filteringParameters,
         [FromQuery] SortingParameters<BookSortBy> sortingParameters)
     {
-        var result = await bookService.GetAllAsync(
+        var result = await booksService.GetAllAsync(
             pagination,
             filteringParameters,
             sortingParameters);
@@ -41,7 +40,7 @@ public class BooksController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ReadBookDto>> GetById(int id)
     {
-        var result = await bookService.GetByIdAsync(id);
+        var result = await booksService.GetByIdAsync(id);
 
         if (result.IsError)
         {
@@ -56,7 +55,7 @@ public class BooksController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ReadBookDto>> Create(CreateBookDto createDto)
     {
-        var result = await bookService.CreateAsync(createDto);
+        var result = await booksService.CreateAsync(createDto);
 
         if (result.IsError)
         {
@@ -76,7 +75,7 @@ public class BooksController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ReadBookDto>> Update(int id, UpdateBookDto updateDto)
     {
-        var result = await bookService.UpdateAsync(id, updateDto);
+        var result = await booksService.UpdateAsync(id, updateDto);
 
         if (result.IsError)
         {
@@ -89,9 +88,10 @@ public class BooksController(
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult> Delete(int id)
     {
-        var result = await bookService.DeleteAsync(id);
+        var result = await booksService.DeleteAsync(id);
 
         if (result.IsError)
         {

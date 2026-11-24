@@ -19,4 +19,13 @@ public static class BookErrors
     public static Error AuthorsNotFound() =>
         Error.Validation(
             description: "One or more of the provided author ids is not valid.");
+
+    public static Error HasLoans(int id) =>
+        Error.Conflict(
+            description: $"Book with Id {id} has active loans and cannot be deleted.");
+
+    public static Error NotEnoughAvailableCopies(int id) =>
+        Error.Conflict(
+            description: $"Book with Id {id} cannot have TotalCopies" +
+                         $"reduced below the number of currently active loans.");
 }

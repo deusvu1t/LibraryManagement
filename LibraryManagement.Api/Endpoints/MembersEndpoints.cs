@@ -1,5 +1,6 @@
 using LibraryManagement.Api.Common;
 using LibraryManagement.Api.DataAccess;
+using LibraryManagement.Api.DTOs.Loans;
 using LibraryManagement.Api.DTOs.Members;
 using LibraryManagement.Api.Filters;
 using LibraryManagement.Api.Mapping;
@@ -22,6 +23,9 @@ public static class MembersEndpoints
         group.MapGet("/", GetAll)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
+        group.MapGet("/{id:int}/loans", GetLoans)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         group.MapGet("/{id:int}", GetById)
             .WithName("GetMemberById")
             .ProducesProblem(StatusCodes.Status404NotFound);
@@ -37,7 +41,8 @@ public static class MembersEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapDelete("/{id:int}", Delete)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         group.MapPatch("/{id:int}/restore", Restore)
             .ProducesProblem(StatusCodes.Status404NotFound);
@@ -95,6 +100,32 @@ public static class MembersEndpoints
         httpContext.Response.Headers.Append(ResponseHeaders.TotalPages, totalPages.ToString());
 
         return TypedResults.Ok(readDtos);
+    }
+
+    private static async Task<Results<Ok<List<ReadLoanDto>>, ProblemHttpResult>> GetLoans(
+        int id,
+        LibraryDbContext dbContext,
+        LoanMapper mapper)
+    {
+        var member = await dbContext.Members.FindAsync(id);
+
+        if (member is null)
+        {
+            return TypedResults.Problem(
+                detail: $"A member with Id {id} has not been found.",
+                statusCode: StatusCodes.Status404NotFound);
+        }
+
+        var loans = await dbContext.Loans
+            .Include(loan => loan.Book)
+            .Include(loan => loan.Member)
+            .Where(loan => loan.MemberId == id)
+            .OrderByDescending(loan => loan.LoanDate)
+            .ToListAsync();
+
+        var loanDtos = loans.Select(mapper.ToReadDto).ToList();
+
+        return TypedResults.Ok(loanDtos);
     }
 
     private static async Task<Results<Ok<ReadMemberDto>, ProblemHttpResult>> GetById(
@@ -156,6 +187,17 @@ public static class MembersEndpoints
         int id,
         LibraryDbContext dbContext)
     {
+        var hasActiveLoans = await dbContext.Loans.AnyAsync(
+            loan => loan.MemberId == id &&
+            loan.ReturnDate == null);
+
+        if (hasActiveLoans)
+        {
+            return TypedResults.Problem(
+                detail: $"A member with Id {id} has active loans and cannot be deleted.",
+                statusCode: StatusCodes.Status409Conflict);
+        }
+
         return await SetMemberActiveStatus(id, false, dbContext);
     }
 
